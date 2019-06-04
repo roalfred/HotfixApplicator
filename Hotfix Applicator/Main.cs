@@ -14,6 +14,7 @@ namespace Hotfix_Applicator
     {
         string workingDirectory = Path.GetTempPath() + "hotfix";
         string kb, pathToHotfix;
+        bool startIpValidated, endIpValidated;
         List<string> ipAddresses = new List<string>();
         Validator validator = new Validator();
         TextReader reader;
@@ -43,6 +44,13 @@ namespace Hotfix_Applicator
             start_ip_lbl.Visible = true;
             start_ip_txt.Visible = true;
             start_ip_lbl.Text = "From";
+
+            if (startIpValidated)
+            {
+                end_ip_lbl.Visible = true;
+                end_ip_prefix_txt.Visible = true;
+                end_ip_suffix_txt.Visible = true;
+            }
 
             get_list_btn.Visible = false;
             ip_list_name_display_box.Visible = false;
@@ -150,6 +158,9 @@ namespace Hotfix_Applicator
                 kb_number_lbl.Visible = false;
                 kb_number_txt.Visible = false;
             }
+
+            skip_if_present_chkbox.Visible = !report_only_chkbox.Checked;
+            force_restart_chkbox.Visible = skip_if_present_chkbox.Visible;
         }
 
         private void Clear_btn_Click(object sender, EventArgs e)
@@ -159,13 +170,30 @@ namespace Hotfix_Applicator
 
         private void Start_btn_Click(object sender, EventArgs e)
         {
-            feedback_box.AppendText(runner.runCommand("cmd.exe", "ping 127.0.0.1"));
+            feedback_box.Clear();
+
+            if(ipAddresses.Count() > 0)
+            {
+                if (pathToHotfix != null)
+                {
+
+                }
+                else
+                {
+                    feedback_box.AppendText("No hotfix selected." + Environment.NewLine);
+                }
+            }
+            else
+            {
+                feedback_box.AppendText("No valid IP to work with.  Verify your IP input."+Environment.NewLine);
+            }
         }
 
         private void Start_ip_txt_Leave(object sender, EventArgs e)
         {
             feedback_box.Clear();
-            if (!validator.ValidateIP(start_ip_txt.Text))
+            startIpValidated = validator.ValidateIP(start_ip_txt.Text);
+            if (!startIpValidated)
             {
                 feedback_box.AppendText("IP address is not valid" + Environment.NewLine);
                 start_ip_txt.BackColor = Color.LightPink;
@@ -190,9 +218,28 @@ namespace Hotfix_Applicator
         private void End_ip_suffix_txt_Leave(object sender, EventArgs e)
         {
             feedback_box.Clear();
+            ipAddresses.Clear();
             string[] startIpOctets = start_ip_txt.Text.Split('.');
             string endIpOctet = end_ip_suffix_txt.Text;
-            feedback_box.AppendText(validator.ValidateEndingOctet(startIpOctets, endIpOctet).ToString());
+            endIpValidated = validator.ValidateEndingOctet(startIpOctets, endIpOctet);
+
+            if (!endIpValidated)
+            {
+                feedback_box.AppendText("Not a valid ending IP in the range.  Check the ending IP and make sure that its not lower than the starting IP" + Environment.NewLine);
+                end_ip_suffix_txt.BackColor = Color.LightPink;
+            }
+            else if (startIpValidated && endIpValidated)
+            {
+                end_ip_suffix_txt.BackColor = Color.White;
+                int endOfFirst = Int32.Parse(startIpOctets[3]);
+                int endOfEnd = Int32.Parse(endIpOctet);
+
+                for (int i = endOfFirst; i <= endOfEnd; i++)
+                {
+                    ipAddresses.Add(startIpOctets[0]+"."+ startIpOctets[1]+"."+ startIpOctets[2]+"."+i.ToString());
+                }
+            }
+
         }
 
         private void Skip_if_present_chkbox_CheckedChanged(object sender, EventArgs e)

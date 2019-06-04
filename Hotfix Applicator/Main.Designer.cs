@@ -54,6 +54,7 @@
             this.feedback_box = new System.Windows.Forms.RichTextBox();
             this.open_ip_list_dialog = new System.Windows.Forms.OpenFileDialog();
             this.open_hotfix_dialog = new System.Windows.Forms.OpenFileDialog();
+            this.force_restart_chkbox = new System.Windows.Forms.CheckBox();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -95,6 +96,7 @@
             // 
             // hotfix_section_gb
             // 
+            this.hotfix_section_gb.Controls.Add(this.force_restart_chkbox);
             this.hotfix_section_gb.Controls.Add(this.kb_number_lbl);
             this.hotfix_section_gb.Controls.Add(this.kb_number_txt);
             this.hotfix_section_gb.Controls.Add(this.skip_if_present_chkbox);
@@ -134,9 +136,9 @@
             this.skip_if_present_chkbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.skip_if_present_chkbox.Location = new System.Drawing.Point(16, 134);
             this.skip_if_present_chkbox.Name = "skip_if_present_chkbox";
-            this.skip_if_present_chkbox.Size = new System.Drawing.Size(174, 19);
+            this.skip_if_present_chkbox.Size = new System.Drawing.Size(176, 19);
             this.skip_if_present_chkbox.TabIndex = 11;
-            this.skip_if_present_chkbox.Text = "Skip If Alreadt Installed";
+            this.skip_if_present_chkbox.Text = "Skip If Already Installed";
             this.skip_if_present_chkbox.UseVisualStyleBackColor = true;
             this.skip_if_present_chkbox.CheckedChanged += new System.EventHandler(this.Skip_if_present_chkbox_CheckedChanged);
             // 
@@ -349,6 +351,17 @@
             this.open_hotfix_dialog.Filter = "Microsoft Updates (*.msu)|*.msu";
             this.open_hotfix_dialog.FileOk += new System.ComponentModel.CancelEventHandler(this.Open_hotfix_dialog_FileOk);
             // 
+            // force_restart_chkbox
+            // 
+            this.force_restart_chkbox.AutoSize = true;
+            this.force_restart_chkbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.force_restart_chkbox.Location = new System.Drawing.Point(284, 101);
+            this.force_restart_chkbox.Name = "force_restart_chkbox";
+            this.force_restart_chkbox.Size = new System.Drawing.Size(112, 19);
+            this.force_restart_chkbox.TabIndex = 14;
+            this.force_restart_chkbox.Text = "Force Restart";
+            this.force_restart_chkbox.UseVisualStyleBackColor = true;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -397,6 +410,7 @@
         private System.Windows.Forms.CheckBox skip_if_present_chkbox;
         private System.Windows.Forms.TextBox kb_number_txt;
         private System.Windows.Forms.Label kb_number_lbl;
+        private System.Windows.Forms.CheckBox force_restart_chkbox;
     }
 }
 
