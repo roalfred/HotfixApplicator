@@ -7,18 +7,22 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Reflection;
+using System.Resources;
 
 namespace Hotfix_Applicator
 {
     public partial class Main : Form
     {
         string workingDirectory = Path.GetTempPath() + "hotfix";
-        string kb, pathToHotfix;
+        string kb, pathToHotfix, hotfix;
         bool startIpValidated, endIpValidated;
         List<string> ipAddresses = new List<string>();
+        List<string[]> report = new List<string[]>();
         Validator validator = new Validator();
         TextReader reader;
         ExeRunner runner = new ExeRunner();
+        Applicator applicator = new Applicator();
 
         public Main()
         {
@@ -111,11 +115,11 @@ namespace Hotfix_Applicator
 
         private void Open_hotfix_dialog_FileOk(object sender, CancelEventArgs e)
         {
-            hotfix_name_display_box.Text = open_hotfix_dialog.SafeFileName;
+            hotfix = open_hotfix_dialog.SafeFileName;
+            hotfix_name_display_box.Text = hotfix;
             pathToHotfix = open_hotfix_dialog.FileName;
             runner.runCommand("cmd.exe", "mkdir "+workingDirectory);
-            feedback_box.AppendText (runner.runCommand("cmd.exe", "expand -f:\"PkgInstallOrder.txt\" \"" + @pathToHotfix + "\" " + workingDirectory));
-
+            feedback_box.AppendText (runner.runCommand("cmd.exe", "expand -f:\"PkgInstallOrder.txt\" \"" + @pathToHotfix + "\" " + workingDirectory)+Environment.NewLine);
             try
             {
                 reader = new StreamReader(workingDirectory + @"\PkgInstallOrder.txt");
@@ -166,27 +170,6 @@ namespace Hotfix_Applicator
         private void Clear_btn_Click(object sender, EventArgs e)
         {
             feedback_box.Clear();
-        }
-
-        private void Start_btn_Click(object sender, EventArgs e)
-        {
-            feedback_box.Clear();
-
-            if(ipAddresses.Count() > 0)
-            {
-                if (pathToHotfix != null)
-                {
-
-                }
-                else
-                {
-                    feedback_box.AppendText("No hotfix selected." + Environment.NewLine);
-                }
-            }
-            else
-            {
-                feedback_box.AppendText("No valid IP to work with.  Verify your IP input."+Environment.NewLine);
-            }
         }
 
         private void Start_ip_txt_Leave(object sender, EventArgs e)
@@ -242,6 +225,11 @@ namespace Hotfix_Applicator
 
         }
 
+        private void Kb_number_txt_Leave(object sender, EventArgs e)
+        {
+            kb = kb_number_txt.Text;
+        }
+
         private void Skip_if_present_chkbox_CheckedChanged(object sender, EventArgs e)
         {
             if (skip_if_present_chkbox.Checked || report_only_chkbox.Checked)
@@ -254,6 +242,84 @@ namespace Hotfix_Applicator
                 kb_number_lbl.Visible = false;
                 kb_number_txt.Visible = false;
             }
+        }
+
+        private void Start_btn_Click(object sender, EventArgs e)
+        {
+            feedback_box.Clear();
+            report.Clear();
+
+            if (single_opt.Checked && startIpValidated)
+            {
+                ipAddresses.Clear();
+                ipAddresses.Add(start_ip_txt.Text);
+            }
+
+            if (ipAddresses.Count() > 0)
+            {
+                if (pathToHotfix != null)
+                {
+                    if (report_only_chkbox.Checked && (kb != "" || kb != null))
+                    {
+                        report.Add(new string[] { "IP", "Status", kb+" Notes" });
+                        foreach (string address in ipAddresses)
+                        {
+                            feedback_box.AppendText("Checking " + address + Environment.NewLine);
+                            string[] response = applicator.ChecForKB(address, kb);
+                            feedback_box.AppendText(response[0]+" -- "+ response[1] + " -- " + response[2]);
+                            report.Add(response);
+                        }
+                        feedback_box.AppendText("Done");
+                    }
+                    else
+                    {
+                        foreach (string address in ipAddresses)
+                        {
+                            string[] response;
+
+                            feedback_box.AppendText("Installing to " + address + Environment.NewLine);
+                            if (kb != "" || kb != null)
+                            {
+                                response = applicator.ChecForKB(address, kb);
+                                bool copied = false;
+                                if (response[1] == "success" && response[2] != "Installed")
+                                {
+                                    try
+                                    {
+                                        File.Copy(pathToHotfix, @"\\" + address + @"C$\" + hotfix, true);
+                                        copied = true;
+                                    }
+                                    catch(Exception ex)
+                                    {
+                                        Console.WriteLine(ex.Message + Environment.NewLine);
+                                    }
+                                    if (copied)
+                                    {
+                                        feedback_box.AppendText(runner.runCommand("PsExec.exe", @"-accepteula -s \\" + start_ip_txt.Text + " cmd /c ipconfig")+Environment.NewLine);
+                                    }
+                                    else
+                                    {
+                                        feedback_box.AppendText("File Not copied"+Environment.NewLine);
+                                    }
+                                }
+                            }
+                            response = applicator.InstallHotfix(address, kb, skip_if_present_chkbox.Checked, force_restart_chkbox.Checked);
+                            feedback_box.AppendText(response[0] + " -- " + response[1] + " -- " + response[2] + Environment.NewLine);
+                            report.Add(response);
+                        }
+                        feedback_box.AppendText("Done" + Environment.NewLine);
+                    }
+                }
+                else
+                {
+                    feedback_box.AppendText("No hotfix selected." + Environment.NewLine);
+                }
+            }
+            else
+            {
+                feedback_box.AppendText("No valid IP to work with.  Verify your IP input." + Environment.NewLine);
+            }
+
         }
     }
 }

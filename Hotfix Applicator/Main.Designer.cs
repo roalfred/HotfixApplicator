@@ -32,6 +32,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.start_btn = new System.Windows.Forms.Button();
             this.hotfix_section_gb = new System.Windows.Forms.GroupBox();
+            this.force_restart_chkbox = new System.Windows.Forms.CheckBox();
             this.kb_number_lbl = new System.Windows.Forms.Label();
             this.kb_number_txt = new System.Windows.Forms.TextBox();
             this.skip_if_present_chkbox = new System.Windows.Forms.CheckBox();
@@ -54,7 +55,6 @@
             this.feedback_box = new System.Windows.Forms.RichTextBox();
             this.open_ip_list_dialog = new System.Windows.Forms.OpenFileDialog();
             this.open_hotfix_dialog = new System.Windows.Forms.OpenFileDialog();
-            this.force_restart_chkbox = new System.Windows.Forms.CheckBox();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -111,6 +111,17 @@
             this.hotfix_section_gb.TabStop = false;
             this.hotfix_section_gb.Text = "Hotfix Section";
             // 
+            // force_restart_chkbox
+            // 
+            this.force_restart_chkbox.AutoSize = true;
+            this.force_restart_chkbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.force_restart_chkbox.Location = new System.Drawing.Point(284, 101);
+            this.force_restart_chkbox.Name = "force_restart_chkbox";
+            this.force_restart_chkbox.Size = new System.Drawing.Size(112, 19);
+            this.force_restart_chkbox.TabIndex = 14;
+            this.force_restart_chkbox.Text = "Force Restart";
+            this.force_restart_chkbox.UseVisualStyleBackColor = true;
+            // 
             // kb_number_lbl
             // 
             this.kb_number_lbl.AutoSize = true;
@@ -129,6 +140,7 @@
             this.kb_number_txt.Size = new System.Drawing.Size(148, 23);
             this.kb_number_txt.TabIndex = 12;
             this.kb_number_txt.Visible = false;
+            this.kb_number_txt.Leave += new System.EventHandler(this.Kb_number_txt_Leave);
             // 
             // skip_if_present_chkbox
             // 
@@ -350,17 +362,6 @@
             // 
             this.open_hotfix_dialog.Filter = "Microsoft Updates (*.msu)|*.msu";
             this.open_hotfix_dialog.FileOk += new System.ComponentModel.CancelEventHandler(this.Open_hotfix_dialog_FileOk);
-            // 
-            // force_restart_chkbox
-            // 
-            this.force_restart_chkbox.AutoSize = true;
-            this.force_restart_chkbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.force_restart_chkbox.Location = new System.Drawing.Point(284, 101);
-            this.force_restart_chkbox.Name = "force_restart_chkbox";
-            this.force_restart_chkbox.Size = new System.Drawing.Size(112, 19);
-            this.force_restart_chkbox.TabIndex = 14;
-            this.force_restart_chkbox.Text = "Force Restart";
-            this.force_restart_chkbox.UseVisualStyleBackColor = true;
             // 
             // Main
             // 

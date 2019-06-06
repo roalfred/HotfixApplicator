@@ -12,21 +12,13 @@ namespace Hotfix_Applicator
             try
             {
                 if(address.Trim().Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Length == 4) {
-                    IPAddress ipAddr;
-                    if (IPAddress.TryParse(address, out ipAddr))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    IPAddress ip = IPAddress.Parse(address);
+                    return true;
                 }
                 else
                 {
                     return false;
                 }
-                
             }
             catch (Exception)
             {
@@ -46,13 +38,12 @@ namespace Hotfix_Applicator
                 int endOfFirst = Int32.Parse(startIpOctets[3]);
                 int endOfEnd = Int32.Parse(endIpLastOctet);
 
-                return (endOfEnd < endOfFirst) ? false : true; 
+                return (endOfEnd < endOfFirst) ? false : true;
             }
             catch
             {
                 return false;
             }
-            return false;
         }
     }
 }
