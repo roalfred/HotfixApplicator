@@ -2,13 +2,9 @@
 using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using System.Reflection;
-using System.Resources;
 
 namespace Hotfix_Applicator
 {
@@ -119,7 +115,7 @@ namespace Hotfix_Applicator
             hotfix_name_display_box.Text = hotfix;
             pathToHotfix = open_hotfix_dialog.FileName;
             runner.runCommand("cmd.exe", "mkdir "+workingDirectory);
-            feedback_box.AppendText (runner.runCommand("cmd.exe", "expand -f:\"PkgInstallOrder.txt\" \"" + @pathToHotfix + "\" " + workingDirectory)+Environment.NewLine);
+            runner.runCommand("cmd.exe", "expand -f:\"PkgInstallOrder.txt\" \"" + @pathToHotfix + "\" " + workingDirectory+" > nul 2>&1");
             try
             {
                 reader = new StreamReader(workingDirectory + @"\PkgInstallOrder.txt");
@@ -275,36 +271,40 @@ namespace Hotfix_Applicator
                     {
                         foreach (string address in ipAddresses)
                         {
-                            string[] response;
+                            string[] response = new string[3];
 
                             feedback_box.AppendText("Installing to " + address + Environment.NewLine);
                             if (kb != "" || kb != null)
                             {
                                 response = applicator.ChecForKB(address, kb);
-                                bool copied = false;
-                                if (response[1] == "success" && response[2] != "Installed")
+
+                                if (response[1] == "Success" && response[2] != "Installed")
                                 {
+                                    string destination = @"\\" + address + @"\C$\" + hotfix;
                                     try
                                     {
-                                        File.Copy(pathToHotfix, @"\\" + address + @"C$\" + hotfix, true);
-                                        copied = true;
+                                        feedback_box.AppendText("Copying hotfix file to " + address + Environment.NewLine);
+                                        File.Copy(pathToHotfix, destination, true);
+
+                                        string restartOption = (force_restart_chkbox.Checked) ? "forcerestart" : "norestart";
+                                        feedback_box.AppendText("Executing remote install on " + address + Environment.NewLine);
+                                        feedback_box.AppendText(applicator.InstallHotfix(address, hotfix, restartOption)+Environment.NewLine);                               
+                                        
                                     }
                                     catch(Exception ex)
                                     {
+                                        feedback_box.AppendText("Hotfix file not copied to "+address + Environment.NewLine);
                                         Console.WriteLine(ex.Message + Environment.NewLine);
                                     }
-                                    if (copied)
-                                    {
-                                        feedback_box.AppendText(runner.runCommand("PsExec.exe", @"-accepteula -s \\" + start_ip_txt.Text + " cmd /c ipconfig")+Environment.NewLine);
-                                    }
-                                    else
-                                    {
-                                        feedback_box.AppendText("File Not copied"+Environment.NewLine);
-                                    }
+                                }else if (response[2] == "Installed")
+                                {
+                                    feedback_box.AppendText(address+" already has "+kb+" installed."+Environment.NewLine);
+                                }else if(response[1] != "Success")
+                                {
+                                    feedback_box.AppendText(address + " is not reachable" + Environment.NewLine);
                                 }
                             }
-                            response = applicator.InstallHotfix(address, kb, skip_if_present_chkbox.Checked, force_restart_chkbox.Checked);
-                            feedback_box.AppendText(response[0] + " -- " + response[1] + " -- " + response[2] + Environment.NewLine);
+                            feedback_box.AppendText(response[0]+"  -----  "+ response[1] + "  -----  " + response[2]+Environment.NewLine);
                             report.Add(response);
                         }
                         feedback_box.AppendText("Done" + Environment.NewLine);

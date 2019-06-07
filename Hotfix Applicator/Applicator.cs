@@ -29,7 +29,7 @@ namespace Hotfix_Applicator
                 }
                 else
                 {
-                    list[2] = found;
+                    list[2] = "Not Installed";
                 }
             }
             else
@@ -39,19 +39,12 @@ namespace Hotfix_Applicator
             return list;
         }
 
-        public string[] InstallHotfix(string address, string hotfix, bool skipIfPresent, bool forceRestart)
-        {
-            string[] list = new string[3];
-            return list;
-        }
+        public string InstallHotfix(string address, string hotfix, string restartOption) {
 
-        public void ExtractResource(string resource, string path)
-        {
-            Stream stream = GetType().Assembly.GetManifestResourceStream(resource);
-            byte[] bytes = new byte[(int)stream.Length];
-            stream.Read(bytes, 0, bytes.Length);
-            File.WriteAllBytes(path, bytes);
-        }
+            string response = runner.runCommand("PsExec.exe", @"-accepteula -nobanner -s \\" + address + @" cmd /c C:\" + hotfix + " /quiet /" + restartOption);
+            Console.WriteLine(response);
 
+            return response;
+        }
     }
 }
