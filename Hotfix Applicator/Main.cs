@@ -221,6 +221,20 @@ namespace Hotfix_Applicator
 
         }
 
+        private void Domain_opt_CheckedChanged(object sender, EventArgs e)
+        {
+            string domain = "";
+            domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
+            feedback_box.AppendText(domain);
+            domain_txt.Visible = domain_opt.Checked;
+            domain_txt.Text = domain;
+        }
+
+        private void Local_opt_CheckedChanged(object sender, EventArgs e)
+        {
+            domain_txt.Text = "";
+        }
+
         private void Kb_number_txt_Leave(object sender, EventArgs e)
         {
             kb = kb_number_txt.Text;
@@ -245,79 +259,101 @@ namespace Hotfix_Applicator
             feedback_box.Clear();
             report.Clear();
 
+
             if (single_opt.Checked && startIpValidated)
             {
                 ipAddresses.Clear();
                 ipAddresses.Add(start_ip_txt.Text);
             }
 
-            if (ipAddresses.Count() > 0)
+            if (ipAddresses.Count() == 0)
             {
-                if (pathToHotfix != null)
+                feedback_box.AppendText("No valid IP to work with.  Verify your IP input." + Environment.NewLine);
+                return;
+            }
+
+
+            if (pathToHotfix == null || pathToHotfix == "")
+            {
+                feedback_box.AppendText("No hotfix selected." + Environment.NewLine);
+                return;
+            }
+            
+
+
+            if (report_only_chkbox.Checked && (kb != "" || kb != null))
+            {
+                report.Add(new string[] { "IP", "Status", kb + " Notes" });
+                foreach (string address in ipAddresses)
                 {
-                    if (report_only_chkbox.Checked && (kb != "" || kb != null))
-                    {
-                        report.Add(new string[] { "IP", "Status", kb+" Notes" });
-                        foreach (string address in ipAddresses)
-                        {
-                            feedback_box.AppendText("Checking " + address + Environment.NewLine);
-                            string[] response = applicator.ChecForKB(address, kb);
-                            feedback_box.AppendText(response[0]+" -- "+ response[1] + " -- " + response[2]);
-                            report.Add(response);
-                        }
-                        feedback_box.AppendText("Done");
-                    }
-                    else
-                    {
-                        foreach (string address in ipAddresses)
-                        {
-                            string[] response = new string[3];
-
-                            feedback_box.AppendText("Installing to " + address + Environment.NewLine);
-                            if (kb != "" || kb != null)
-                            {
-                                response = applicator.ChecForKB(address, kb);
-
-                                if (response[1] == "Success" && response[2] != "Installed")
-                                {
-                                    string destination = @"\\" + address + @"\C$\" + hotfix;
-                                    try
-                                    {
-                                        feedback_box.AppendText("Copying hotfix file to " + address + Environment.NewLine);
-                                        File.Copy(pathToHotfix, destination, true);
-
-                                        string restartOption = (force_restart_chkbox.Checked) ? "forcerestart" : "norestart";
-                                        feedback_box.AppendText("Executing remote install on " + address + Environment.NewLine);
-                                        feedback_box.AppendText(applicator.InstallHotfix(address, hotfix, restartOption)+Environment.NewLine);                               
-                                        
-                                    }
-                                    catch(Exception ex)
-                                    {
-                                        feedback_box.AppendText("Hotfix file not copied to "+address + Environment.NewLine);
-                                        Console.WriteLine(ex.Message + Environment.NewLine);
-                                    }
-                                }else if (response[2] == "Installed")
-                                {
-                                    feedback_box.AppendText(address+" already has "+kb+" installed."+Environment.NewLine);
-                                }else if(response[1] != "Success")
-                                {
-                                    feedback_box.AppendText(address + " is not reachable" + Environment.NewLine);
-                                }
-                            }
-                            feedback_box.AppendText(response[0]+"  -----  "+ response[1] + "  -----  " + response[2]+Environment.NewLine);
-                            report.Add(response);
-                        }
-                        feedback_box.AppendText("Done" + Environment.NewLine);
-                    }
+                    feedback_box.AppendText("Checking " + address + Environment.NewLine);
+                    string[] response = applicator.ChecForKB(address, kb);
+                    feedback_box.AppendText(response[0] + " -- " + response[1] + " -- " + response[2]);
+                    report.Add(response);
                 }
-                else
-                {
-                    feedback_box.AppendText("No hotfix selected." + Environment.NewLine);
-                }
+                feedback_box.AppendText("Done");
             }
             else
             {
-                feedback_box.AppendText("No valid IP to work with.  Verify your IP input." + Environment.NewLine);
+                if(username_txt.Text == null || username_txt.Text == "")
+                {
+                    feedback_box.AppendText("Username cannot be empty");
+                    return;
+                }
+
+                if (password_txt.Text == null || password_txt.Text == "")
+                {
+                    feedback_box.AppendText("Password cannot be empty");
+                    return;
+                }
+
+                foreach (string address in ipAddresses)
+                {
+                    string[] response = new string[3];
+
+                    feedback_box.AppendText("Installing to " + address + Environment.NewLine);
+                    if (kb != "" || kb != null)
+                    {
+                        response = applicator.ChecForKB(address, kb);
+
+                        if (response[1] == "Success" && response[2] != "Installed")
+                        {
+                            string destination = @"\\" + address + @"\C$\" + hotfix;
+                            try
+                            {
+                                feedback_box.AppendText("Copying hotfix file to " + address + Environment.NewLine);
+                                File.Copy(pathToHotfix, destination, true);
+
+                                string domain = (domain_txt.Text == "" || domain_txt.Text == null) ? address : domain_txt.Text;
+                                string restartOption = (force_restart_chkbox.Checked) ? "forcerestart" : "norestart";
+                                string user = username_txt.Text;
+                                string password = password_txt.Text;
+
+                                feedback_box.AppendText("Executing remote install on " + address + Environment.NewLine);
+                                feedback_box.AppendText(applicator.InstallHotfix(address, hotfix, restartOption, domain, user, password) + Environment.NewLine);
+                                feedback_box.AppendText("Verifying remote install on " + address + Environment.NewLine);
+                                response = applicator.ChecForKB(address, kb);
+                            }
+                            catch (Exception ex)
+                            {
+                                feedback_box.AppendText("Hotfix file not copied to " + address + Environment.NewLine);
+                                Console.WriteLine(ex.Message + Environment.NewLine);
+                            }
+                        }
+                        else if (response[2] == "Installed")
+                        {
+                            feedback_box.AppendText(address + " already has " + kb + " installed." + Environment.NewLine);
+                        }
+                        else if (response[1] != "Success")
+                        {
+                            feedback_box.AppendText(address + " is not reachable" + Environment.NewLine);
+                        }
+                    }
+                    feedback_box.AppendText(response[0] + "  -----  " + response[1] + "  -----  " + response[2] + Environment.NewLine);
+                    feedback_box.AppendText(Environment.NewLine);
+                    report.Add(response);
+                }
+                feedback_box.AppendText("Done" + Environment.NewLine);
             }
 
         }

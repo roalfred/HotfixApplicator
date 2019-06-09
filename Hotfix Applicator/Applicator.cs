@@ -39,10 +39,10 @@ namespace Hotfix_Applicator
             return list;
         }
 
-        public string InstallHotfix(string address, string hotfix, string restartOption) {
-
-            string response = runner.runCommand("PsExec.exe", @"-accepteula -nobanner -s \\" + address + @" cmd /c C:\" + hotfix + " /quiet /" + restartOption);
-            Console.WriteLine(response);
+        public string InstallHotfix(string address, string hotfix, string restartOption, string domain, string user, string password) {
+            string options = @"-accepteula -nobanner -s \\" + address + @" -U " + domain + @"\" + user + @" -p " + password + @" cmd /c C:\" + hotfix + " /quiet /" + restartOption;
+            string response = runner.runCommand("PsExec.exe", options);
+            Console.WriteLine(options);
 
             return response;
         }
