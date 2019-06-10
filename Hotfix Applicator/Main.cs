@@ -25,6 +25,10 @@ namespace Hotfix_Applicator
             InitializeComponent();
         }
 
+        /*
+         * Sets the single IP label to "IP" and makes it visible.  Sets it text field is set to visible,
+         * Sets the visibility all other fields and labels in the IP section to false
+         */
         private void Single_opt_CheckedChanged(object sender, EventArgs e)
         {
             start_ip_lbl.Visible = true;
@@ -39,6 +43,11 @@ namespace Hotfix_Applicator
             ip_list_name_display_box.Visible = false;
         }
 
+        /*
+         * Sets the start IP labels and text boxe to visible and if 
+         * the start IP field has been validated, the end IP label and text input will be made visible
+         * Sets the visibility of the "Get List" option to false
+         */
         private void Range_opt_CheckedChanged(object sender, EventArgs e)
         {
             start_ip_lbl.Visible = true;
@@ -56,6 +65,10 @@ namespace Hotfix_Applicator
             ip_list_name_display_box.Visible = false;
         }
 
+        /*
+         * Sets the single and range input fields and labels to a  visibility of false 
+         * Sets the "Get List" button and dispay field to visible
+         */
         private void List_opt_CheckedChanged(object sender, EventArgs e)
         {
             start_ip_lbl.Visible = false;
@@ -70,16 +83,29 @@ namespace Hotfix_Applicator
 
         }
 
+        /*
+         * Opens the windows Open File Dialog to search for .txt files
+         */
         private void Get_list_btn_Click(object sender, EventArgs e)
         {
             open_ip_list_dialog.ShowDialog();
         }
 
+
+        /*
+         * Opens the windows Open File Dialog to search for .msu files 
+         */
         private void Get_hotfix_btn_Click(object sender, EventArgs e)
         {
             open_hotfix_dialog.ShowDialog();
         }
 
+
+        /*
+         * Reads through the selected ip list file, line by line, and validates each line as an IP Address.
+         * Adds each validated IP to an ipAddress list
+         * Clears the list if an IP is not valid and prints a message to the feedback pane, then exits the loop
+        */
         private void Open_ip_list_dialog_FileOk(object sender, CancelEventArgs e)
         {
             String fileName, line, pathToIpList;
@@ -109,32 +135,40 @@ namespace Hotfix_Applicator
             ip_list_name_display_box.Text = fileName;
         }
 
+
+        /*
+         * Extracts the XML file from the hotfix to the folder %temp%\hotfix\ folder searches for the KB number within the extracted file
+         * Reads the KB number and populates the KB number if found, along with the file name field
+         * The KB number is used to determine if it is already instaled
+         */
         private void Open_hotfix_dialog_FileOk(object sender, CancelEventArgs e)
         {
             hotfix = open_hotfix_dialog.SafeFileName;
             hotfix_name_display_box.Text = hotfix;
             pathToHotfix = open_hotfix_dialog.FileName;
+            runner.runCommand("cmd.exe", "rmdir /Q /S " + workingDirectory);
             runner.runCommand("cmd.exe", "mkdir "+workingDirectory);
-            runner.runCommand("cmd.exe", "expand -f:\"PkgInstallOrder.txt\" \"" + @pathToHotfix + "\" " + workingDirectory+" > nul 2>&1");
+            runner.runCommand("cmd.exe", "expand -f:\"*.xml\" \"" + @pathToHotfix + "\" " + workingDirectory+" > nul 2>&1");
             try
             {
-                reader = new StreamReader(workingDirectory + @"\PkgInstallOrder.txt");
+                string[] files = Directory.GetFiles(workingDirectory);
+                reader = new StreamReader(files[0]);
                 while (true)
                 {
-                    string line = reader.ReadLine();
-                    if(line == null)
-                    {
+                   string line = reader.ReadLine();
+                   if(line == null)
+                   {
                         kb_number_txt.Clear();
                         reader.Close();
                         break;
-                    }
-                    else if (line.Contains("KB"))
-                    {
-                        kb = line.Substring(line.IndexOf("-") + 1, line.LastIndexOf("-") - line.IndexOf("-") - 1);
+                   }
+                   else if (line.Contains("KB"))
+                   {
+                        kb = line.Substring(line.IndexOf("KB"), line.LastIndexOf("version") - line.IndexOf("KB") - 2);
                         kb_number_txt.Text = kb;
                         reader.Close();
                         break;
-                    }
+                   }
                 }
             }
             catch (Exception ex)
@@ -142,6 +176,7 @@ namespace Hotfix_Applicator
                 feedback_box.Clear();
                 feedback_box.AppendText(ex.Message + Environment.NewLine);
                 kb_number_txt.Clear();
+                reader.Close();
             }
             runner.runCommand("cmd.exe", "rmdir /Q /S " + workingDirectory);
         }
