@@ -139,6 +139,7 @@ namespace Hotfix_Applicator
         /*
          * Extracts the XML file from the hotfix to the folder %temp%\hotfix\ folder searches for the KB number within the extracted file
          * Reads the KB number and populates the KB number if found, along with the file name field
+         * Removes the temporary directory and extracted file upon completion
          * The KB number is used to determine if it is already instaled
          */
         private void Open_hotfix_dialog_FileOk(object sender, CancelEventArgs e)
@@ -181,6 +182,11 @@ namespace Hotfix_Applicator
             runner.runCommand("cmd.exe", "rmdir /Q /S " + workingDirectory);
         }
 
+
+        /*
+         * Manipulates the visibility of the KB number label and text,
+         * Manipulates the visibility of the Skip If Present and Report Only check boxes
+         */
         private void Report_only_chkbox_CheckedChanged(object sender, EventArgs e)
         {
             if (report_only_chkbox.Checked || skip_if_present_chkbox.Checked)
@@ -198,11 +204,22 @@ namespace Hotfix_Applicator
             force_restart_chkbox.Visible = skip_if_present_chkbox.Visible;
         }
 
+
+        /*
+         * Clears the feedback area upon click
+         */
         private void Clear_btn_Click(object sender, EventArgs e)
         {
             feedback_box.Clear();
         }
 
+
+
+        /*
+         * Validates the input in the single IP field when focus is lost
+         * Changes the background to light pink if the input did not validate and displays a message in the feedback area
+         * Changes the background to white if it is validated and pre-populates the ending IP prefix
+         */
         private void Start_ip_txt_Leave(object sender, EventArgs e)
         {
             feedback_box.Clear();
@@ -229,6 +246,13 @@ namespace Hotfix_Applicator
             }
         }
 
+
+
+        /*
+         * Validates the ending IP in the range, if IP range was selected.
+         * If validated, loops through each IP in the range and adds them to the global IpAddresses list
+         * If not validated, the background of the last octet is chsnged to light pink.  Stays white if validated
+         */
         private void End_ip_suffix_txt_Leave(object sender, EventArgs e)
         {
             feedback_box.Clear();
@@ -293,6 +317,7 @@ namespace Hotfix_Applicator
         {
             feedback_box.Clear();
             report.Clear();
+            report.Add(new string[] { "IP", "Computer Status", kb + " Notes" });
 
 
             if (single_opt.Checked && startIpValidated)
@@ -318,15 +343,15 @@ namespace Hotfix_Applicator
 
             if (report_only_chkbox.Checked && (kb != "" || kb != null))
             {
-                report.Add(new string[] { "IP", "Status", kb + " Notes" });
+                
                 foreach (string address in ipAddresses)
                 {
                     feedback_box.AppendText("Checking " + address + Environment.NewLine);
                     string[] response = applicator.ChecForKB(address, kb);
-                    feedback_box.AppendText(response[0] + " -- " + response[1] + " -- " + response[2]);
+                    feedback_box.AppendText(response[0] + " -- " + response[1] + " -- " + response[2] + Environment.NewLine);
                     report.Add(response);
                 }
-                feedback_box.AppendText("Done");
+                feedback_box.AppendText("Done!");
             }
             else
             {
@@ -346,17 +371,17 @@ namespace Hotfix_Applicator
                 {
                     string[] response = new string[3];
 
-                    feedback_box.AppendText("Installing to " + address + Environment.NewLine);
+                    feedback_box.AppendText("Checking " + address + Environment.NewLine);
                     if (kb != "" || kb != null)
                     {
                         response = applicator.ChecForKB(address, kb);
 
-                        if (response[1] == "Success" && response[2] != "Installed")
+                        if (response[1] == "Success" && response[2] != "Already Installed")
                         {
                             string destination = @"\\" + address + @"\C$\" + hotfix;
                             try
                             {
-                                feedback_box.AppendText("Copying hotfix file to " + address + Environment.NewLine);
+                                feedback_box.AppendText("Copying the "+kb+" file to " + address + Environment.NewLine);
                                 File.Copy(pathToHotfix, destination, true);
 
                                 string domain = (domain_txt.Text == "" || domain_txt.Text == null) ? address : domain_txt.Text;
@@ -375,20 +400,12 @@ namespace Hotfix_Applicator
                                 Console.WriteLine(ex.Message + Environment.NewLine);
                             }
                         }
-                        else if (response[2] == "Installed")
-                        {
-                            feedback_box.AppendText(address + " already has " + kb + " installed." + Environment.NewLine);
-                        }
-                        else if (response[1] != "Success")
-                        {
-                            feedback_box.AppendText(address + " is not reachable" + Environment.NewLine);
-                        }
                     }
-                    feedback_box.AppendText(response[0] + "  -----  " + response[1] + "  -----  " + response[2] + Environment.NewLine);
+                    feedback_box.AppendText(report[0][0]+" = "+ response[0] + ", " + report[0][1] + " = " + response[1] + ", " + report[0][2] + " = " + response[2] + Environment.NewLine);
                     feedback_box.AppendText(Environment.NewLine);
                     report.Add(response);
                 }
-                feedback_box.AppendText("Done" + Environment.NewLine);
+                feedback_box.AppendText("Done!" + Environment.NewLine);
             }
 
         }

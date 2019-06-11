@@ -22,10 +22,11 @@ namespace Hotfix_Applicator
 
             if (list[1] == "Success")
             {
-                string found = runner.runCommand("cmd.exe", "wmic /node:" + address + " qfe get hotfixid | find \"" + kb + "\"");
+                string found = runner.runCommand("cmd.exe", "wmic /node:" + address + " qfe get hotfixid | find \"" + kb + "\"").Trim();
+
                 if (found == kb)
                 {
-                    list[2] = "Installed";
+                    list[2] = "Already Installed";
                 }
                 else
                 {
