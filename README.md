@@ -13,7 +13,7 @@ Successfully tested on Windows 7 Pro workstations in a domain environment.
 
 
 ## Usage
-1.  Download and compile the source code or just use the precompiled application in the Compiled folder.
+1.  Download and compile the source code or just use the precompiled application in the bin/Release folder.
 2.  Ensure that PSExec.exe is in the same folder of the HotfixApplicator.exe or globaly accessable on the system.
 3.  Run HotfixApplicator as administrator
 4.  Choose the type of installation: Single, Range, or List
